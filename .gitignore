@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.env
+.env.local
+venv/
+env/
+ENV/
+.venv/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+*.log
+
+# Node & Frontend
+node_modules/
+dist/
+build/
+*.local
+.npm/
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Docker & K8s local state
+*.pid
+postgres_data/
+minio_data/
+prometheus_data/
+grafana_data/
