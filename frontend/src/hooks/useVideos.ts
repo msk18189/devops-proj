@@ -11,8 +11,12 @@ export function useVideos(page: number = 1, category?: string) {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await videoService.getVideos(page, 12, category);
-      setVideos(data);
+      const res = await videoService.getVideos({
+        page,
+        pageSize: 12,
+        category: category !== 'All' ? category : undefined
+      });
+      setVideos(res.items);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);

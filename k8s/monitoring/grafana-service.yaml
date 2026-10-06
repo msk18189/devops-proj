@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: video-streaming
+  labels:
+    app: grafana
+    app.kubernetes.io/part-of: streamops
+spec:
+  type: ClusterIP
+  selector:
+    app: grafana
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000

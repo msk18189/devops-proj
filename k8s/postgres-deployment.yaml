@@ -1,22 +1,15 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-  namespace: streamops
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres-deployment
-  namespace: streamops
+  namespace: video-streaming
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: streamops
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: postgres
@@ -30,6 +23,7 @@ spec:
           image: postgres:16-alpine
           ports:
             - containerPort: 5432
+              name: postgres
           env:
             - name: POSTGRES_USER
               valueFrom:
@@ -56,20 +50,25 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "1000m"
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
       volumes:
         - name: postgres-storage
           persistentVolumeClaim:
             claimName: postgres-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-service
-  namespace: streamops
-spec:
-  selector:
-    app: postgres
-  ports:
-    - port: 5432
-      targetPort: 5432
-  type: ClusterIP

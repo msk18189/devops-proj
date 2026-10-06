@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # Final minimal production image
 FROM python:3.11-slim
@@ -21,15 +21,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed wheels from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+# Copy installed dependencies into system path so any user can execute
+COPY --from=builder /install /usr/local
 
-# Non-root security user
-RUN useradd -u 10001 -m appuser
-USER appuser
+# Create non-root application user for container security
+RUN useradd -u 10001 -m -s /bin/sh appuser
 
+# Copy application source code
 COPY --chown=appuser:appuser . .
+
+USER appuser
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

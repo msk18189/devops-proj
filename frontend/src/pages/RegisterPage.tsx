@@ -11,6 +11,7 @@ export function RegisterPage({ onSuccess, onNavigateLogin }: RegisterPageProps) 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -20,6 +21,11 @@ export function RegisterPage({ onSuccess, onNavigateLogin }: RegisterPageProps) 
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
@@ -82,6 +88,19 @@ export function RegisterPage({ onSuccess, onNavigateLogin }: RegisterPageProps) 
             placeholder="••••••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="reg-confirm-password">Confirm Password</label>
+          <input
+            id="reg-confirm-password"
+            type="password"
+            className="form-input"
+            required
+            placeholder="••••••••••••"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
 

@@ -14,7 +14,6 @@ from app.database.session import engine
 import app.models  # noqa: F401
 from app.routes.api import api_router
 from app.monitoring.metrics import metrics_router, PrometheusMiddleware
-from app.middleware.logging import RequestLoggingMiddleware
 from app.middleware.error_handler import (
     api_exception_handler,
     validation_exception_handler,
@@ -22,6 +21,10 @@ from app.middleware.error_handler import (
     sqlalchemy_exception_handler,
     generic_exception_handler
 )
+from app.middleware.logging import RequestLoggingMiddleware
+from app.middleware.security import SecurityHeadersMiddleware, SimpleRateLimiterMiddleware
+
+
 
 # Setup logging
 logging.basicConfig(
@@ -58,6 +61,8 @@ app = FastAPI(
 )
 
 # Middlewares
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(SimpleRateLimiterMiddleware, max_requests=120, window_seconds=60)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -67,6 +72,7 @@ app.add_middleware(
 )
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
+
 
 # Centralized Error Handlers
 app.add_exception_handler(APIException, api_exception_handler)

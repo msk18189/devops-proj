@@ -6,6 +6,7 @@ from app.middleware.error_handler import (
     generic_exception_handler
 )
 from app.middleware.logging import RequestLoggingMiddleware
+from app.middleware.security import SecurityHeadersMiddleware, SimpleRateLimiterMiddleware
 
 __all__ = [
     "api_exception_handler",
@@ -13,5 +14,8 @@ __all__ = [
     "http_exception_handler",
     "sqlalchemy_exception_handler",
     "generic_exception_handler",
-    "RequestLoggingMiddleware"
+    "RequestLoggingMiddleware",
+    "SecurityHeadersMiddleware",
+    "SimpleRateLimiterMiddleware"
 ]
+

@@ -39,3 +39,5 @@ postgres_data/
 minio_data/
 prometheus_data/
 grafana_data/
+storage_data/
+storage_fallback/

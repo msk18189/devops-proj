@@ -31,7 +31,19 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY: str = "minio_admin_user"
     MINIO_SECRET_KEY: str = "minio_admin_secure_password"
     MINIO_BUCKET: str = "video-stream-bucket"
-    MINIO_USE_SSL: bool = False
+    MINIO_SECURE: bool = False
+
+    # Upload Constraints
+    MAX_VIDEO_SIZE_MB: int = 500
+    ALLOWED_VIDEO_EXTENSIONS: List[str] = [".mp4", ".webm", ".mov", ".mkv"]
+    ALLOWED_MIME_TYPES: List[str] = [
+        "video/mp4",
+        "video/webm",
+        "video/quicktime",
+        "video/x-matroska",
+        "application/octet-stream"  # Some browsers send this for MKV/MOV
+    ]
+    STORAGE_LOCAL_FALLBACK_DIR: str = "storage_data"
 
     # CORS
     CORS_ORIGINS: List[str] = [

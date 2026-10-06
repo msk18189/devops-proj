@@ -1,6 +1,13 @@
 from app.schemas.common import ApiResponse, ErrorDetail, ErrorResponse
 from app.schemas.user import UserRegister, UserLogin, UserResponse, TokenResponse, UserRole
-from app.schemas.video import VideoCreate, VideoResponse, VideoListResponse
+from app.schemas.video import (
+    VideoCreate,
+    VideoResponse,
+    VideoListResponse,
+    CreatorInfo,
+    VideoViewResponse,
+    VideoDeleteResponse
+)
 
 __all__ = [
     "ApiResponse",
@@ -13,5 +20,8 @@ __all__ = [
     "UserRole",
     "VideoCreate",
     "VideoResponse",
-    "VideoListResponse"
+    "VideoListResponse",
+    "CreatorInfo",
+    "VideoViewResponse",
+    "VideoDeleteResponse"
 ]

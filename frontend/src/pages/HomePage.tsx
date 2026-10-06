@@ -1,76 +1,190 @@
-import { useState } from 'react';
-import { useVideos } from '../hooks/useVideos.ts';
-import { VideoCard } from '../components/VideoCard.tsx';
+import { useState, useEffect } from 'react';
 import { Video } from '../types/index.ts';
+import { videoService } from '../services/videoService.ts';
+import { VideoCard } from '../components/VideoCard.tsx';
+import { SkeletonGrid } from '../components/SkeletonGrid.tsx';
+import { formatDate } from '../utils/formatters.ts';
 
 interface HomePageProps {
   onSelectVideo: (video: Video) => void;
+  onNavigateBrowse: (category?: string) => void;
 }
 
-export function HomePage({ onSelectVideo }: HomePageProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const categories = ['All', 'DevOps', 'Kubernetes', 'Cloud Architecture', 'Databases', 'Monitoring'];
+export function HomePage({ onSelectVideo, onNavigateBrowse }: HomePageProps) {
+  const [trendingVideos, setTrendingVideos] = useState<Video[]>([]);
+  const [recentVideos, setRecentVideos] = useState<Video[]>([]);
+  const [featuredVideo, setFeaturedVideo] = useState<Video | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const categoryQuery = selectedCategory === 'All' ? undefined : selectedCategory;
-  const { videos, isLoading, error } = useVideos(1, categoryQuery);
+  const categories = [
+    'Technology',
+    'Education',
+    'Entertainment',
+    'Gaming',
+    'Science',
+    'Travel',
+    'Music',
+    'Documentary'
+  ];
+
+  useEffect(() => {
+    const loadHomeData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [popularRes, latestRes] = await Promise.all([
+          videoService.getVideos({ sort: 'popular', pageSize: 6 }),
+          videoService.getVideos({ sort: 'latest', pageSize: 8 })
+        ]);
+
+        const trending = popularRes.items || [];
+        const latest = latestRes.items || [];
+
+        setTrendingVideos(trending);
+        setRecentVideos(latest);
+
+        // Pick top trending or top latest as featured
+        if (trending.length > 0) {
+          setFeaturedVideo(trending[0]);
+        } else if (latest.length > 0) {
+          setFeaturedVideo(latest[0]);
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Failed to connect to video catalog.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadHomeData();
+  }, []);
 
   return (
-    <div style={{ padding: '2rem 0 4rem 0' }}>
+    <div style={{ paddingBottom: '4rem' }}>
       {/* Hero Section */}
-      <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3rem auto' }}>
-        <div style={{ display: 'inline-block', marginBottom: '1rem' }}>
-          <span className="badge badge-indigo">StreamOps v1.0.0 Architecture</span>
-        </div>
-        <h1 style={{ fontSize: '2.75rem', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.2, marginBottom: '1.2rem' }}>
-          Production DevOps for High-Throughput Video Streaming
-        </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.6 }}>
-          Explore distributed microservice streaming backed by FastAPI, PostgreSQL, Kubernetes HPA auto-scaling, and Prometheus telemetry.
-        </p>
-      </div>
+      {featuredVideo && (
+        <section className="hero-section">
+          <div className="hero-content">
+            <span className="hero-tag">Featured Video • {featuredVideo.category}</span>
+            <h1 className="hero-title">{featuredVideo.title}</h1>
+            <p className="hero-desc">{featuredVideo.description || 'Watch now on StreamOps high-throughput streaming platform.'}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
+              <button
+                onClick={() => onSelectVideo(featuredVideo)}
+                className="btn btn-primary"
+                style={{ padding: '0.65rem 1.5rem', fontSize: '0.95rem' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Watch Now
+              </button>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                {featuredVideo.views.toLocaleString()} views • {formatDate(featuredVideo.created_at)}
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
 
-      {/* Category Pills */}
-      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '2rem', justifyContent: 'center' }}>
-        {categories.map((cat) => (
+      {/* Category Pills Bar */}
+      <section style={{ margin: '1.5rem 0' }}>
+        <div className="category-bar">
           <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`btn ${selectedCategory === cat ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ borderRadius: 'var(--radius-full)', padding: '0.4rem 1rem', fontSize: '0.85rem' }}
+            onClick={() => onNavigateBrowse('All')}
+            className="category-chip active"
           >
-            {cat}
+            All Categories
           </button>
-        ))}
-      </div>
-
-      {/* Video Catalog */}
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
-          <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', margin: '0 auto 1rem auto', animation: 'spin 1s linear infinite' }} />
-          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-          <p>Connecting to backend database...</p>
-        </div>
-      ) : error ? (
-        <div className="error-banner" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'center' }}>
-          <p style={{ fontWeight: 600 }}>Backend Notice</p>
-          <p style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>{error}</p>
-        </div>
-      ) : videos.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--border-subtle)' }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 1rem auto', opacity: 0.5 }}>
-            <rect width="20" height="15" x="2" y="7" rx="2" ry="2"></rect>
-            <polyline points="17 2 12 7 7 2"></polyline>
-          </svg>
-          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>No videos in catalog</h3>
-          <p style={{ fontSize: '0.9rem' }}>Database is online. Videos will appear when uploaded or seeded.</p>
-        </div>
-      ) : (
-        <div className="video-grid">
-          {videos.map((video) => (
-            <VideoCard key={video.id} video={video} onSelect={onSelectVideo} />
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => onNavigateBrowse(cat)}
+              className="category-chip"
+            >
+              {cat}
+            </button>
           ))}
         </div>
+      </section>
+
+      {error && (
+        <div style={{
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          borderRadius: 'var(--radius-md)',
+          padding: '1rem 1.5rem',
+          color: '#F87171',
+          marginBottom: '2rem'
+        }}>
+          {error}
+        </div>
       )}
+
+      {/* Trending Now */}
+      <section style={{ marginBottom: '3.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, letterSpacing: '-0.01em' }}>Trending Now</h2>
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginTop: '0.15rem' }}>Most viewed streaming media across all genres</p>
+          </div>
+          <button
+            onClick={() => onNavigateBrowse('All')}
+            style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.875rem', fontWeight: 600 }}
+          >
+            View All →
+          </button>
+        </div>
+
+        {isLoading ? (
+          <SkeletonGrid count={4} />
+        ) : trendingVideos.length === 0 ? (
+          <div style={{ padding: '3rem 2rem', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+            <p>No trending videos available yet. Be the first to upload!</p>
+          </div>
+        ) : (
+          <div className="video-grid">
+            {trendingVideos.map((video) => (
+              <VideoCard key={video.id} video={video} onSelect={onSelectVideo} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Recently Uploaded */}
+      <section>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, letterSpacing: '-0.01em' }}>Recently Uploaded</h2>
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginTop: '0.15rem' }}>Freshly published content from creators</p>
+          </div>
+          <button
+            onClick={() => onNavigateBrowse('All')}
+            style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.875rem', fontWeight: 600 }}
+          >
+            View All →
+          </button>
+        </div>
+
+        {isLoading ? (
+          <SkeletonGrid count={8} />
+        ) : recentVideos.length === 0 ? (
+          <div style={{ padding: '3rem 2rem', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+            <p>No recent uploads found in the catalog.</p>
+          </div>
+        ) : (
+          <div className="video-grid">
+            {recentVideos.map((video) => (
+              <VideoCard key={video.id} video={video} onSelect={onSelectVideo} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

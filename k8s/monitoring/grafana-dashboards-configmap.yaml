@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-providers
+  namespace: video-streaming
+  labels:
+    app: grafana
+    app.kubernetes.io/part-of: streamops
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'StreamOps Dashboards'
+        orgId: 1
+        folder: 'StreamOps Platform'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards

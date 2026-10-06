@@ -9,6 +9,12 @@ export interface User {
   updated_at?: string;
 }
 
+export interface CreatorInfo {
+  id: number;
+  name: string;
+  email: string;
+}
+
 export interface Video {
   id: number;
   title: string;
@@ -21,18 +27,23 @@ export interface Video {
   file_size: number;
   views: number;
   uploaded_by: number;
+  creator?: CreatorInfo | null;
+  stream_url?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface VideoListResult {
+  items: Video[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 }
 
 export interface ApiSuccessResponse<T> {
   success: true;
   data: T;
-  meta?: {
-    total?: number;
-    page?: number;
-    page_size?: number;
-  };
 }
 
 export interface ApiErrorResponse {
@@ -51,6 +62,28 @@ export interface AuthTokens {
   token_type: string;
   expires_in: number;
   user: User;
+}
+
+export interface AdminDashboardData {
+  authorized_admin: string;
+  admin_profile: User;
+  metrics: {
+    total_users: number;
+    total_videos: number;
+    total_views: number;
+    total_view_events: number;
+  };
+  system_metrics?: {
+    total_users: number;
+    total_videos: number;
+    total_views: number;
+  };
+  recent_videos: Video[];
+  system_health: {
+    database: string;
+    database_message: string;
+    status: string;
+  };
 }
 
 export interface HealthStatus {
